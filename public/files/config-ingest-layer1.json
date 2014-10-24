@@ -1,11 +1,19 @@
-[
-    {
-        "id": "1", 
-        "bbox": [
-            48.77, 
-            2.18, 
-            48.94, 
-            2.52
-        ]
-    }
-]
+{
+    "description":"some layer description",
+    "name":"CassiniParis",
+    "year":1740,
+    "bbox": "48.77, 2.18, 48.94, 2.52",
+    "external_id":0,
+    "tilejson":"http://maps.ign.fr.s3.amazonaws.com/cassini/cassinispec.json",
+    "sheets":[
+        {
+            "id": "1", 
+            "bbox": [
+                48.77, 
+                2.18, 
+                48.94, 
+                2.52
+            ]
+        }
+    ]
+}
