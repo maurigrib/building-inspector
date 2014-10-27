@@ -93,40 +93,39 @@ class @Progress
 
   updateLayersControl: () ->
     $("#layers_toggler").remove()
-    html = '<div id="layers_toggler">View: '
 
-    layer_array = (@createLayerToggle layer for layer in @loadedData.layers)
+    if @loadedData.layers.length > 1
+      html = '<select id="layers_toggler">'
 
-    # console.log layer_array
-    html += layer_array.join(" | ")
+      layer_array = (@createLayerToggle layer for layer in @loadedData.layers)
 
-    html += "</div>"
+      # console.log layer_array
+      html += layer_array.join("")
+
+      html += "</select>"
+    else
+      html = "<strong>#{layer.name}, #{layer.year}</strong>"
 
     $("#legend").prepend(html)
 
-    @activateLayerToggle layer.id for layer in @loadedData.layers
-
-
-  createLayerToggle: (layer) ->
-    if @tileset == layer.tilejson
-      "<strong>#{layer.name}, #{layer.year}</strong>"
-    else
-      "<a id=\"layer_toggle_#{layer.id}\" data-id=\"#{layer.id}\" data-bbox=\"#{layer.bbox}\" data-tileset=\"#{layer.tilejson}\">#{layer.name}, #{layer.year}</a>"
-
-  activateLayerToggle: (layer_id) ->
     p = @
-    $("#layer_toggle_#{layer_id}").on("click", (e) ->
+
+    $("#layers_toggler").on("change", () ->
       # console.log "click:", e.layer
-      e.preventDefault()
-      p.toggleLayer(e)
+      id = $(this).val()
+      p.toggleLayer(Number(id)) unless id == ""
     )
 
-  toggleLayer: (e) ->
+  createLayerToggle: (layer) ->
+    selected = if (@layer_id==layer.id) then 'selected=\"selected\"' else ''
+    "<option id=\"layer_toggle_#{layer.id}\" #{selected} value=\"#{layer.id}\" data-bbox=\"#{layer.bbox}\" data-tileset=\"#{layer.tilejson}\">#{layer.name}, #{layer.year}</option>"
+
+  toggleLayer: (id) ->
     @map.removeLayer(@markers) if @markers
-    target = $(e.originalEvent.target)
+    target = $("#layer_toggle_#{id}")
 
     @tileset = target.data("tileset")
-    @layer_id = target.data("id")
+    @layer_id = id
     @bbox = target.data("bbox").split(",")
 
     @updateTileset()
