@@ -65,7 +65,7 @@ class @Inspector
       animate: true
       attributionControl: false
       minZoom: 12
-      maxZoom: 21
+      maxZoom: 15
       dragging: @options.draggableMap
       tileLayer: # added this because maptiles.nypl does not support retina yet
         detectRetina: false
