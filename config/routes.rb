@@ -1,5 +1,8 @@
 Webappmini::Application.routes.draw do
 
+  resources :layers
+
+
   devise_for :users, :controllers => { :omniauth_callbacks => "users/omniauth_callbacks" }
 
   resources :users
@@ -40,6 +43,9 @@ Webappmini::Application.routes.draw do
   get "footprint", to: "fixer#geometry", :as => "geometry"
   get "footprint/progress", to: "fixer#progress_geometry", :as => "geometry_progress"
   get "footprint/progress_all", to: "fixer#progress_geometry_all", :as => "geometry_progress_all"
+  # - these for task-named routes for geometry progress since user-friendly alias for geometry is "footprint"
+  get "geometry/progress", to: "fixer#progress_geometry", :as => "geometry_progress_"
+  get "geometry/progress_all", to: "fixer#progress_geometry_all", :as => "geometry_progress_all_"
 
   # footprints progress json endpoints
   get "geometry/progress_user", to: "fixer#session_progress_geometry_for_sheet"
@@ -58,6 +64,8 @@ Webappmini::Application.routes.draw do
   # this uses a different route as the task name for user friendliness purposes
   get "fix", to: "fixer#polygonfix", :as => "polygonfix"
   get "fix/progress", to: "fixer#progress_polygonfix", :as => "polygonfix_progress"
+  # - these for task-named routes for geometry progress since user-friendly alias for polygonfix is "fix"
+  get "polygonfix/progress", to: "fixer#progress_polygonfix", :as => "polygonfix_progress_"
 
   # polygonfix progress json endpoints
   get "polygonfix/progress_user", to: "fixer#session_progress_polygonfix_for_sheet"
@@ -71,6 +79,15 @@ Webappmini::Application.routes.draw do
   # colors progress json endpoints
   get "color/progress_user", to: "fixer#session_progress_color_for_sheet"
   get "color/progress_sheet", to: "fixer#progress_sheet_color"
+
+  # toponym main routes
+  get "toponym", to: "fixer#toponym", :as => "toponym"
+  get "toponym/progress", to: "fixer#progress_toponym", :as => "toponym_progress"
+  get "toponym/progress_all", to: "fixer#progress_toponym_all", :as => "toponym_progress_all"
+
+  # toponym progress json endpoints
+  get "toponym/progress_user", to: "fixer#session_progress_toponym_for_sheet"
+  get "toponym/progress_sheet", to: "fixer#progress_sheet_toponym"
 
   # json flagging
   post "fixer/flag", to: "fixer#apply_flags_to_polygon"

@@ -1,0 +1,70 @@
+<% content_for :dynamic_js do %>
+  <style type="text/css">
+    .wrapper {
+      position: relative;
+      width: 800px;
+      height: 600px;
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+    #info {
+      position: absolute;
+      top: 0;
+      right: 0;
+      /*width: 100px;*/
+      /*height: 100px;*/
+      padding: 10px;
+      background: white;
+      z-index: 10;
+      text-align: right;
+    }
+  </style>
+  <%= javascript_include_tag "admin/layers", {:id => "data", "data-tiles" => "#{@layer.tilejson}", "data-type" => @layer.tileset_type, "data-bbox" => @layer.bbox} %>
+<% end %>
+
+<div class="wrapper">
+  <div id="info"></div>
+  <div id="map"></div>
+</div>
+
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Name:</b>
+  <%= @layer.name %>
+</p>
+
+<p>
+  <b>Tile URL:</b>
+  <%= @layer.tilejson %>
+</p>
+
+<p>
+  <b>Tileset type (tms, wmts):</b>
+  <%= @layer.tileset_type %>
+</p>
+
+<p>
+  <b>Description:</b>
+  <%= @layer.description %>
+</p>
+
+<p>
+  <b>Bbox:</b>
+  <%= @layer.bbox %>
+</p>
+
+<p>
+  <b>Year:</b>
+  <%= @layer.year %>
+</p>
+
+<p>
+  <b>External ID:</b>
+  <%= @layer.external_id %>
+</p>
+
+<%= link_to 'Edit', edit_layer_path(@layer) %> |
+<%= link_to 'Back', layers_path %>

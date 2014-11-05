@@ -10,6 +10,7 @@ class @Inspector
     @desktopWidth = 600
 
     defaults =
+      flaggableType: 'Polygon'
       editablePolygon: false
       draggableMap: false
       constrainMapToPolygon: true
@@ -52,10 +53,12 @@ class @Inspector
 
     # @geo = {}
 
+    @mapdata = $(@options.jsdataID).data("map")
+
     @initMap()
 
   initMap: () ->
-    @map = L.mapbox.map('map', 'https://s3.amazonaws.com/maptiles.nypl.org/859/859spec.json',
+    @map = L.mapbox.map('map', 'nypllabs.g6ei9mm0',
       zoomControl: false
       scrollWheelZoom: @options.scrollWheelZoom
       touchZoom: @options.touchZoom
@@ -68,10 +71,10 @@ class @Inspector
         detectRetina: false
     )
 
-    @overlay2 = L.mapbox.tileLayer('https://s3.amazonaws.com/maptiles.nypl.org/860/860spec.json',
-      zIndex: 3
-      detectRetina: false # added this because maptiles.nypl does not support retina yet
-    ).addTo(@map)
+    @tileset = @mapdata.tileset.tilejson
+    @tiletype = @mapdata.tileset.tileset_type
+
+    @updateTileset()
 
     L.control.zoom(
       position: 'topright'
@@ -84,6 +87,20 @@ class @Inspector
     # history.replaceState({},"",@options.task)
 
     @options.tutorialOn = $(@options.jsdataID).data("session")
+
+  updateTileset: () ->
+    @map.removeLayer(@overlay) if @overlay
+
+    if (@tiletype!="wmts")
+      @overlay = L.mapbox.tileLayer(@tileset,
+        zIndex: 3
+        detectRetina: false # added this because maptiles.nypl does not support retina yet
+      ).addTo(@map)
+    else
+      @overlay = new L.TileLayer.WMTS(@tileset ,
+        zIndex: 3
+        detectRetina: false # added this because maptiles.nypl does not support retina yet
+      ).addTo(@map)
 
   clearScreen: () ->
     # rest should be implemented in the inspector instance
@@ -104,16 +121,17 @@ class @Inspector
     # rest should be implemented in the inspector instance
 
   onMapChange: (e) =>
-    return if !@options.constrainMapToPolygon
-    # check if current polygon is somewhat visible in view
-    # so user does not get lost
-    if @geo?.getBounds? and not @map.getBounds().intersects(@geo.getBounds())
-      @map.fitBounds( @geo.getBounds() )
+    # move flags
     for flag, contents of @flags
       latlng = contents.circle.getLatLng()
       xy = @map.latLngToContainerPoint(latlng)
       contents.elem.css("left",xy.x)
       contents.elem.css("top",xy.y)
+    # check if current polygon is somewhat visible in view
+    # so user does not get lost
+    return if !@options.constrainMapToPolygon
+    if @geo?.getBounds? and not @map.getBounds().intersects(@geo.getBounds())
+      @map.fitBounds( @geo.getBounds() )
 
   onTutorialClick: (e) =>
     # should be implemented in the inspector instance
@@ -163,6 +181,7 @@ class @Inspector
 
     @showSpinner()
     type = @options.task
+    flaggable_type = @options.flaggableType
 
     _gaq.push(['_trackEvent', 'Flag', type])
     @allPolygonsSession++
@@ -170,12 +189,15 @@ class @Inspector
 
     inspector = @
 
+    # console.log "prepareFlagSubmission:", @currentPolygon.id, type, data
+
     $(@options.buttonsID).fadeOut 200 , () ->
       $.ajax(
         type: "POST"
         url: url
         data:
-          i: inspector.currentPolygon.id
+          i: inspector.currentPolygon.id || inspector.loadedData.map.id
+          ft: flaggable_type
           t: type
           f: data
         success: () ->
@@ -212,8 +234,7 @@ class @Inspector
   showInspectingMessage: () ->
     return if @layer_id == @loadedData.map.layer_id or @options.tutorialOn
     @layer_id = @loadedData.map.layer_id
-    msg = "Now inspecting:<br/><strong>Brooklyn, 1855</strong>"
-    msg = "Now inspecting:<br/><strong>Manhattan, 1857-62</strong>" if @layer_id == 859 # hack // eventually add to sheet table
+    msg = "Now inspecting:<br/><strong>#{@loadedData.tileset.name}, #{@loadedData.tileset.year}</strong>"
     @showMessage(msg, true)
 
   invokeTutorial: () =>
@@ -318,8 +339,7 @@ class @Inspector
     if @firstLoad
       # using embedded map data
       @firstLoad = false
-      mapdata = $(@options.jsdataID).data("map")
-      @processPolygons(mapdata)
+      @processPolygons(@mapdata)
     else
       $.getJSON("/fixer/map.json?type=#{@options.task}", (data) ->
         # console.log(d);
@@ -331,6 +351,9 @@ class @Inspector
     @loadedData = data
     @polyData = data.poly
     @updateScore()
+    if @loadedData.tileset.tilejson != @tileset
+      @tileset = @loadedData.tileset.tilejson
+      @updateTileset()
     if @polyData?.length > 0
       data.poly = Utils.shuffle(data.poly)
       @showInspectingMessage()
@@ -409,9 +432,9 @@ class @Inspector
   showPolygon: (e) =>
     inspector = @
     # console.log "showPolygon"
-    @geo.setStyle (feature) ->
+    @geo?.setStyle (feature) ->
       inspector.options.polygonStyle
 
   hidePolygon: (e) =>
-    @geo.setStyle (feature) ->
+    @geo?.setStyle (feature) ->
       opacity: 0

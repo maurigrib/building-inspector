@@ -1,0 +1,22 @@
+<% content_for :page_title do %>Building Inspector by NYPL Labs<% end %>
+
+<% content_for :dynamic_js do %>
+  <%= stylesheet_link_tag    "fixer", :media => "all" %>
+  <%= stylesheet_link_tag    "toponym", :media => "all" %>
+
+  <%= javascript_include_tag "inspector_toponym", {:id => "toponymjs", "data-server" => CGI.escape("#{request.protocol}#{request.host_with_port}"), "data-session" => "#{@isNew}", "data-map" => "#{@map}"} %>
+<% end %>
+
+<%= render :partial => "partials/nav" %>
+<%= render :partial => "partials/main_container" %>
+<div id="controls" class="compact">
+  <div id="buttons">
+    <div class="wrapper">
+      <div class="help-text">
+        Find the named places
+      </div>
+      <a href="javascript:;" id="submit-button" rel="nofollow">SAVE</a>
+    </div>
+  </div>
+</div>
+<%= link_to (content_tag "span","The New York Public Library"), "http://www.nypl.org", {:class => "nypl-logo", :title => "Visit NYPL.org", :id=>"nypl-mini"} %>

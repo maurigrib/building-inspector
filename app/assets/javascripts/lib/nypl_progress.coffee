@@ -9,8 +9,8 @@ class @Progress
     window.nypl_progress = @ # to make it accessible from console
 
     @ids = [] # for timed animations (highlights)
-    @_SW = new L.LatLng(40.62563874006115,-74.13093566894531)
-    @_NE = new L.LatLng(40.81640757520087,-73.83087158203125)
+    # @_SW = new L.LatLng(40.62563874006115,-74.13093566894531)
+    # @_NE = new L.LatLng(40.81640757520087,-73.83087158203125)
 
     defaults =
       task: '' # geometry, address, polygonfix
@@ -28,6 +28,15 @@ class @Progress
         stroke: false
     @options = $.extend defaults, options
 
+    @loadedData = $(@options.jsdataID).data("progress")
+
+    @layer_id = @loadedData.layer.id
+
+    @tileset = @loadedData.layer.tilejson
+    @tiletype = @loadedData.layer.tileset_type
+
+    @bbox = @loadedData.layer.bbox
+
     @initMap()
 
   initMap: () ->
@@ -36,27 +45,21 @@ class @Progress
       animate: true
       scrollWheelZoom: true
       attributionControl: false
-      minZoom: 12
+      minZoom: 7
       maxZoom: 21
       dragging: true
-      maxBounds: new L.LatLngBounds(@_SW, @_NE).pad(1)
+      # maxBounds: new L.LatLngBounds(@_SW, @_NE).pad(1)
     )
 
     t = @
 
-    @overlay = L.mapbox.tileLayer('https://s3.amazonaws.com/maptiles.nypl.org/859/859spec.json',
-      zIndex: 2
-      detectRetina: false # added this because maptiles.nypl does not support retina yet
-    ).addTo(@map)
-
-    @overlay2 = L.mapbox.tileLayer('https://s3.amazonaws.com/maptiles.nypl.org/860/860spec.json',
-      zIndex: 3
-      detectRetina: false # added this because maptiles.nypl does not support retina yet
-    ).addTo(@map)
-
     @zoomControl = L.control.zoom(
       position: 'topright'
     ).addTo(@map)
+
+    @updateTileset()
+
+    @updateLayersControl()
 
     @addEventListeners()
 
@@ -67,6 +70,78 @@ class @Progress
         total: 0
         sheet_id: 0
         bounds: []
+
+  loadProgress: () ->
+    url = "/#{@options.task}/progress.json"
+    url = "/#{@options.task}/progress_all.json" if @options.mode == "all"
+
+    url += '?layer_id=' + @layer_id
+
+    p = @
+
+    $.getJSON(url, (data) ->
+      p.loadedData = data
+      p.getCounts()
+    )
+
+
+  updateTileset: () ->
+    @map.removeLayer(@overlay) if @overlay
+
+    if (@tiletype!="wmts")
+      @overlay = L.mapbox.tileLayer(@tileset,
+        zIndex: 3
+        detectRetina: false # added this because maptiles.nypl does not support retina yet
+      ).addTo(@map)
+    else
+      @overlay = new L.TileLayer.WMTS( @tileset ,
+        zIndex: 3
+        detectRetina: false # added this because maptiles.nypl does not support retina yet
+      ).addTo(@map)
+
+  updateLayersControl: () ->
+    $("#layers_toggler").remove()
+
+    if @loadedData.layers.length > 1
+      html = '<div id="layers_toggler">View: <select id="layers_select">'
+
+      layer_array = (@createLayerToggle layer for layer in @loadedData.layers)
+
+      # console.log layer_array
+      html += layer_array.join("")
+
+      html += "</select></div>"
+    else
+      layer = @loadedData.layers[0]
+      html = "<strong>#{layer.name}, #{layer.year}</strong>"
+
+    $("#legend").prepend(html)
+
+    p = @
+
+    $("#layers_select").on("change", () ->
+      # console.log "click:", e.layer
+      id = $(this).val()
+      p.toggleLayer(Number(id)) unless id == ""
+    )
+
+  createLayerToggle: (layer) ->
+    selected = if (@layer_id==layer.id) then 'selected=\"selected\"' else ''
+    "<option id=\"layer_toggle_#{layer.id}\" #{selected} value=\"#{layer.id}\" data-bbox=\"#{layer.bbox}\" data-tileset=\"#{layer.tilejson}\" data-type=\"#{layer.tileset_type}\">#{layer.name}, #{layer.year}</option>"
+
+  toggleLayer: (id) ->
+    @map.removeLayer(@markers) if @markers
+    target = $("#layer_toggle_#{id}")
+
+    @tileset = target.data("tileset")
+    @tiletype = target.data("type")
+    @layer_id = id
+    @bbox = target.data("bbox")
+
+    @resetSheet()
+    @updateTileset()
+    @updateLayersControl()
+    @loadProgress()
 
   addEventListeners: () ->
     p = @
@@ -129,16 +204,15 @@ class @Progress
       $(@).remove()
 
   getCounts: () =>
+    @map.removeLayer(@markers) if @markers
     $(@options.loaderID).remove()
-    data = $(@options.jsdataID).data("progress")
 
-    bounds = new L.LatLngBounds(@_SW, @_NE)
-    @map.fitBounds bounds
+    @map.fitBounds(Utils.parseBbox(@bbox))
 
-    @updateScore(data.all_polygons_session)
+    @updateScore(@loadedData.all_polygons_session)
 
     # marker clustering layer
-    markers = new L.MarkerClusterGroup
+    @markers = new L.MarkerClusterGroup
       singleMarkerMode: true
       disableClusteringAtZoom: 19
       iconCreateFunction: (c) ->
@@ -159,20 +233,20 @@ class @Progress
 
     p = @
 
-    markers.on("click", (e) ->
+    @markers.on("click", (e) ->
       # console.log "click:", e.layer
       p.resetSheet()
       p.getMarkerData(e)
     )
 
-    markers.on("clusterclick", (e) ->
+    @markers.on("clusterclick", (e) ->
       p.resetSheet()
     )
 
-    counts = data.counts
-    @addMarker markers, count for count in counts
+    counts = @loadedData.counts
+    @addMarker @markers, count for count in counts
 
-    markers.addTo @map
+    @markers.addTo @map
     @
 
   processData: (data) ->
@@ -192,19 +266,8 @@ class @Progress
   addMarker: (markers, data) ->
     # console.log data
 
-    bbox = data.bbox.split ","
+    bounds = Utils.parseBbox(data.bbox)
 
-    W = parseFloat(bbox[0])
-    S = parseFloat(bbox[1])
-    E = parseFloat(bbox[2])
-    N = parseFloat(bbox[3])
-
-    SW = new L.LatLng(S, W)
-    NW = new L.LatLng(N, W)
-    NE = new L.LatLng(N, E)
-    SE = new L.LatLng(S, E)
-
-    bounds = new L.LatLngBounds(SW, NE)
     latlng = bounds.getCenter()
 
     markers.addLayer new L.InspectorMarker latlng,

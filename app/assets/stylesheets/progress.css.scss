@@ -35,6 +35,9 @@
   z-index: 1;
   text-align: left;
   font-size: 12px;
+  padding: 5px 10px;
+  background: $white;
+  @include border-radius(3px);
 
   @media screen and (max-width: $desktopwidth) {
     top: auto;
@@ -43,17 +46,24 @@
     right: 50px;
   }
 
-  ul {
-    padding: 5px 10px;
-    background: $white;
+  #layers_select {
+    width: auto;
     margin: 0;
-    @include border-radius(3px);
+  }
+
+  ul {
+    padding: 0;
+    margin: 0;
     @include clearfix;
   }
 
   li {
     float: left;
     margin-right: 10px;
+  }
+
+  a {
+    cursor: pointer;
   }
 
   .color {

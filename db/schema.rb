@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140320154554) do
+ActiveRecord::Schema.define(:version => 20141030141230) do
 
   create_table "consensuspolygons", :force => true do |t|
     t.string   "task"
@@ -27,18 +27,31 @@ ActiveRecord::Schema.define(:version => 20140320154554) do
 
   create_table "flags", :force => true do |t|
     t.string   "flag_type"
-    t.integer  "polygon_id"
+    t.integer  "flaggable_id"
     t.string   "session_id"
     t.text     "flag_value"
     t.boolean  "is_primary"
-    t.datetime "created_at",                                 :null => false
-    t.datetime "updated_at",                                 :null => false
-    t.decimal  "latitude",   :precision => 15, :scale => 12
-    t.decimal  "longitude",  :precision => 15, :scale => 12
+    t.datetime "created_at",                                                            :null => false
+    t.datetime "updated_at",                                                            :null => false
+    t.decimal  "latitude",       :precision => 15, :scale => 12
+    t.decimal  "longitude",      :precision => 15, :scale => 12
+    t.string   "flaggable_type",                                 :default => "polygon"
   end
 
-  add_index "flags", ["polygon_id"], :name => "polygon_index"
-  add_index "flags", ["session_id", "flag_type", "polygon_id", "flag_value", "latitude", "longitude"], :name => "index_flags_on_session_id", :unique => true
+  add_index "flags", ["flaggable_id"], :name => "polygon_index"
+  add_index "flags", ["session_id", "flag_type", "flaggable_id", "flag_value", "latitude", "longitude"], :name => "index_flags_on_session_id", :unique => true
+
+  create_table "layers", :force => true do |t|
+    t.string   "name"
+    t.string   "tilejson"
+    t.string   "description"
+    t.integer  "year"
+    t.datetime "created_at",                      :null => false
+    t.datetime "updated_at",                      :null => false
+    t.string   "bbox"
+    t.integer  "external_id"
+    t.string   "tileset_type", :default => "tms"
+  end
 
   create_table "polygons", :force => true do |t|
     t.text     "geometry"
@@ -46,39 +59,23 @@ ActiveRecord::Schema.define(:version => 20140320154554) do
     t.text     "vectorizer_json"
     t.integer  "sheet_id"
     t.string   "color"
-    t.datetime "created_at",                                                                :null => false
-    t.datetime "updated_at",                                                                :null => false
+    t.datetime "created_at",                                                     :null => false
+    t.datetime "updated_at",                                                     :null => false
     t.integer  "dn"
-    t.integer  "flag_count",                                                 :default => 0
-    t.string   "consensus"
-    t.decimal  "centroid_lat",               :precision => 15, :scale => 12
-    t.decimal  "centroid_lon",               :precision => 15, :scale => 12
-    t.string   "consensus_address"
-    t.text     "consensus_polygonfix_value"
-    t.boolean  "consensus_polygonfix"
+    t.integer  "flag_count",                                      :default => 0
+    t.decimal  "centroid_lat",    :precision => 15, :scale => 12
+    t.decimal  "centroid_lon",    :precision => 15, :scale => 12
   end
-
-  add_index "polygons", ["consensus"], :name => "consensus_index2"
-  add_index "polygons", ["sheet_id", "consensus"], :name => "consensus_index"
-  add_index "polygons", ["sheet_id", "consensus_address"], :name => "consensus_address_index"
-  add_index "polygons", ["sheet_id", "consensus_polygonfix"], :name => "consensus_polygonfix_index"
 
   create_table "sheets", :force => true do |t|
     t.string   "status"
     t.string   "bbox"
-    t.integer  "map_id"
-    t.string   "map_url"
-    t.datetime "created_at",           :null => false
-    t.datetime "updated_at",           :null => false
+    t.string   "map_id"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
     t.integer  "layer_id"
-    t.string   "consensus"
-    t.string   "consensus_address"
-    t.boolean  "consensus_polygonfix"
   end
 
-  add_index "sheets", ["consensus"], :name => "sheet_consensus_index"
-  add_index "sheets", ["consensus_address"], :name => "sheet_consensus_address_index"
-  add_index "sheets", ["consensus_polygonfix"], :name => "sheet_consensus_polygonfix_index"
   add_index "sheets", ["layer_id"], :name => "index_sheets_on_layer_id"
 
   create_table "users", :force => true do |t|

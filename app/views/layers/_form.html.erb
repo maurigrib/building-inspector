@@ -1,0 +1,45 @@
+<%= form_for(@layer) do |f| %>
+  <% if @layer.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@layer.errors.count, "error") %> prohibited this layer from being saved:</h2>
+
+      <ul>
+      <% @layer.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :name %><br />
+    <%= f.text_field :name %>
+  </div>
+  <div class="field">
+    <%= f.label "Tile URL" %><br />
+    <%= f.text_field :tilejson %>
+  </div>
+  <div class="field">
+    <%= f.label :tileset_type %><br />
+    <%= f.text_field :tileset_type %>
+  </div>
+  <div class="field">
+    <%= f.label :bbox %>W,S,E,N<br />
+    <%= f.text_field :bbox, :placeholder => 'W,S,E,N' %>
+  </div>
+  <div class="field">
+    <%= f.label :description %><br />
+    <%= f.text_field :description %>
+  </div>
+  <div class="field">
+    <%= f.label :year %><br />
+    <%= f.number_field :year %>
+  </div>
+  <div class="field">
+    <%= f.label :external_id %><br />
+    <%= f.number_field :external_id %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

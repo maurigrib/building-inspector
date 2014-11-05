@@ -15,12 +15,20 @@ class MapWidget
         detectRetina: false
     )
 
-    layer_id = @data.layer_id
+    layer_data = $("#data").data("layer")
+    tileset = layer_data.tilejson
+    tiletype = layer_data.tileset_type
 
-    @overlay = L.mapbox.tileLayer("https://s3.amazonaws.com/maptiles.nypl.org/#{layer_id}/#{layer_id}spec.json",
-      zIndex: 2
-      detectRetina: false # added this because maptiles.nypl does not support retina yet
-    ).addTo(@map)
+    if (tiletype!="wmts")
+      @overlay = L.mapbox.tileLayer(tileset,
+        zIndex: 2
+        detectRetina: false # added this because maptiles.nypl does not support retina yet
+      ).addTo(@map)
+    else
+      @overlay = new L.TileLayer.WMTS(tileset ,
+        zIndex: 2
+        detectRetina: false # added this because maptiles.nypl does not support retina yet
+      ).addTo(@map)
 
     L.control.zoom(
       position: 'bottomleft'
@@ -33,21 +41,9 @@ class MapWidget
   loadData: () =>
     el = $("#stats")
 
+    bounds = Utils.parseBbox(@data.bbox)
 
-    bbox = @data.bbox.split(",")
-
-    bbox = (Number(n) for n in bbox)
-
-    w = bbox[0]
-    e = bbox[2]
-    n = bbox[3]
-    s = bbox[1]
-
-    bounds = L.latLngBounds([[ s,w ], [ n,e ]])
-
-    console.log bbox, bounds
-
-    @map.setView( bounds.getCenter(), 19 )
+    @map.fitBounds( bounds )
 
     # $.getJSON(url, (data) ->
     #   el.find('.spinner').remove()

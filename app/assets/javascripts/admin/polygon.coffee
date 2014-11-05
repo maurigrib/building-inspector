@@ -1,15 +1,25 @@
 class Polygon
   constructor: () ->
-    @map = L.mapbox.map('map', 'https://s3.amazonaws.com/maptiles.nypl.org/859/859spec.json',
+    @map = L.mapbox.map('map', 'nypllabs.g6ei9mm0',
       animate: true
-      minZoom: 16
+      minZoom: 1
       maxZoom: 21
+      attributionControl: false
     )
 
-    @overlay2 = L.mapbox.tileLayer('https://s3.amazonaws.com/maptiles.nypl.org/860/860spec.json',
-      zIndex: 3
-    ).addTo(@map)
+    tileset = $("#polydata").data("tiles")
+    tiletype = $("#polydata").data("type")
 
+    if (tiletype!="wmts")
+      @overlay = L.mapbox.tileLayer(tileset,
+        zIndex: 2
+        detectRetina: false # added this because maptiles.nypl does not support retina yet
+      ).addTo(@map)
+    else
+      @overlay = new L.TileLayer.WMTS(tileset ,
+        zIndex: 2
+        detectRetina: false # added this because maptiles.nypl does not support retina yet
+      ).addTo(@map)
 
     @markerFlag = L.icon(
       iconUrl: '/assets/minimarker.png'

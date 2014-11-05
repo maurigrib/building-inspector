@@ -2,6 +2,7 @@
 
 <% content_for :dynamic_js do %>
   <%= stylesheet_link_tag    "fixer", :media => "all" %>
+  <%= stylesheet_link_tag    "address", :media => "all" %>
 
   <%= javascript_include_tag "inspector_address", {:id => "addressjs", "data-server" => CGI.escape("#{request.protocol}#{request.host_with_port}"), "data-session" => "#{@isNew}", "data-map" => "#{@map}"} %>
 <% end %>

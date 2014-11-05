@@ -6,24 +6,15 @@ class FixerController < ApplicationController
   # GEOMETRY
 
 	def geometry
-	  @current_page = "geometry"
-		@isNew = (cookies[:geometry_first_visit]!="no" || params[:tutorial]=="true") ? true : false
-		cookies[:geometry_first_visit] = { :value => "no", :expires => 15.days.from_now }
-		@map = getMap("geometry").to_json
+    getTask("geometry")
 	end
 
 	def progress_geometry
-	  @current_page = "progress"
-		# returns a GeoJSON object with the flags the session has sent so far
-		# NOTE: there might be more than one flag per polygon but this only returns each polygon once
-		@progress = getProgress("geometry","user").to_json
+    getProgress("geometry","user","progress")
 	end
 
 	def progress_geometry_all
-  	@current_page = "progress_all"
-		# returns a GeoJSON object with the flags the session has sent so far
-		# NOTE: there might be more than one flag per polygon but this only returns each polygon once
-    @progress = getProgress("geometry","all").to_json
+    getProgress("geometry","all","progress_all")
 	end
 
   # - JSON endpoints for progress
@@ -89,25 +80,15 @@ class FixerController < ApplicationController
   # ADDRESS
 
 	def address
-		@current_page = "address"
-		sort_tasks()
-		@isNew = (cookies[:address_first_visit]!="no" || params[:tutorial]=="true") ? true : false
-		cookies[:address_first_visit] = { :value => "no", :expires => 15.days.from_now }
-		@map = getMap("address").to_json
+    getTask("address")
 	end
 
 	def progress_address
-	  	@current_page = "progress_address"
-		# returns a GeoJSON object with the flags the session has sent so far
-		# NOTE: there might be more than one flag per polygon but this only returns each polygon once
-    @progress = getProgress("address","user").to_json
+    getProgress("address","user","progress_address")
 	end
 
 	def progress_address_all
-  	@current_page = "progress_address_all"
-		# returns a GeoJSON object with the flags the session has sent so far
-		# NOTE: there might be more than one flag per polygon but this only returns each polygon once
-    @progress = getProgress("address","all").to_json
+    getProgress("address","all","progress_address_all")
 	end
 
   # - JSON endpoints for progress
@@ -137,21 +118,55 @@ class FixerController < ApplicationController
     respond_with( @progress )
   end
 
+  # TOPONYM
+
+  def toponym
+    getTask("toponym")
+  end
+
+  def progress_toponym
+    getProgress("toponym","user","progress_toponym")
+  end
+
+  def progress_toponym_all
+    getProgress("toponym","all","progress_toponym_all")
+  end
+
+  # - JSON endpoints for progress
+
+  def session_progress_toponym_for_sheet
+    # the toponym progress for a given sheet id
+    session = getSession()
+
+    if params[:id] == nil
+      respond_with("no id provided")
+      return
+    end
+
+    if user_signed_in?
+      all_flags = Flag.flags_for_sheet_for_user(params[:id], current_user.id, "toponym")
+    else
+      all_flags = Flag.flags_for_sheet_for_session(params[:id], session, "toponym")
+    end
+
+    poly = []
+
+    all_flags.each do |f|
+      poly.push(f.as_feature)
+    end
+    @progress = {}
+    @progress[:poly] = { :type => "FeatureCollection", :features => poly }
+    respond_with( @progress )
+  end
+
   # POLYGONFIX
 
   def polygonfix
-    @current_page = "polygonfix"
-    sort_tasks()
-    @isNew = (cookies[:polygonfix_first_visit]!="no" || params[:tutorial]=="true") ? true : false
-    cookies[:polygonfix_first_visit] = { :value => "no", :expires => 15.days.from_now }
-    @map = getMap("polygonfix").to_json
+    getTask("polygonfix")
   end
 
   def progress_polygonfix
-    @current_page = "progress_polygonfix"
-    # returns a GeoJSON object with the flags the session has sent so far
-    # NOTE: there might be more than one flag per polygon but this only returns each polygon once
-    @progress = getProgress("polygonfix","user").to_json
+    getProgress("polygonfix","user","progress_polygonfix")
   end
 
   # - JSON endpoints for progress
@@ -179,25 +194,15 @@ class FixerController < ApplicationController
   # COLOR
 
   def color
-    @current_page = "color"
-    sort_tasks()
-    @isNew = (cookies[:color_first_visit]!="no" || params[:tutorial]=="true") ? true : false
-    cookies[:color_first_visit] = { :value => "no", :expires => 15.days.from_now }
-    @map = getMap("color").to_json
+    getTask("color")
   end
 
   def progress_color
-    @current_page = "progress_color"
-    # returns a GeoJSON object with the flags the session has sent so far
-    # NOTE: there might be more than one flag per polygon but this only returns each polygon once
-    @progress = getProgress("color","user").to_json
+    getProgress("color","user","progress_color")
   end
 
   def progress_color_all
-    @current_page = "progress_color_all"
-    # returns a GeoJSON object with the flags the session has sent so far
-    # NOTE: there might be more than one flag per polygon but this only returns each polygon once
-    @progress = getProgress("color","all").to_json
+    getProgress("color","all","progress_color_all")
   end
 
   # - JSON endpoints for progress
@@ -276,17 +281,50 @@ class FixerController < ApplicationController
     respond_with( @map )
   end
 
-  # OTHER
+  # generic methods
 
-  def getProgress(task, mode)
+  def getTask(type)
+    @current_page = type
+    @isNew = (cookies["#{type}_first_visit"]!="no" || params[:tutorial]=="true") ? true : false
+    cookies["#{type}_first_visit"] = { :value => "no", :expires => 15.days.from_now }
+    @map = getMap(type).to_json
+  end
+
+  def getProgress(type, scope, pagename)
+    @current_page = pagename
+    # returns a GeoJSON object with the flags the session has sent so far
+    # NOTE: there might be more than one flag per polygon but this only returns each polygon once
+    layer_id = params[:layer_id]
+    @progress = getProgressData(type,scope,layer_id).to_json
+    respond_to do |format|
+      format.html # index.html.erb
+      format.json { render json: @progress }
+    end
+  end
+
+  def getProgressData(task, mode, layer_id=nil)
+    if !layer_id
+      layer = Layer.first
+      layer_id = layer[:id]
+    else
+      layer = Layer.find(layer_id)
+    end
     session = getSession()
     progress = {}
-    progress[:counts] = Polygon.grouped_by_sheet unless mode == "user"
+    progress[:layers] = Layer.all(:order => :id)
+    progress[:layer] = layer
+    progress[:counts] = Polygon.grouped_by_sheet(layer_id) unless mode == "user"
     if user_signed_in?
-      progress[:counts] = Flag.grouped_flags_for_user(current_user.id, task) unless mode == "all"
+      if mode != "all"
+        progress[:counts] = Flag.grouped_flags_for_user(current_user.id, layer_id, task) if task == "toponym"
+        progress[:counts] = Flag.grouped_flags_for_user(current_user.id, layer_id, task) if task != "toponym"
+      end
       progress[:all_polygons_session] = Flag.flags_for_user(current_user.id, task)
     else
-      progress[:counts] = Flag.grouped_flags_for_session(session, task) unless mode == "all"
+      if mode != "all"
+        progress[:counts] = Flag.grouped_flags_for_session(session, layer_id, task) if task == "toponym"
+        progress[:counts] = Flag.grouped_flags_for_session(session, layer_id, task) if task != "toponym"
+      end
       progress[:all_polygons_session] = Flag.flags_for_session(session, task)
     end
     return progress
@@ -313,6 +351,7 @@ class FixerController < ApplicationController
 
     if map[:map] == nil
       # no map was found, send empty stuff
+      map[:tileset] = Layer.first
       map[:poly] = []
       map[:status][:map_polygons] = 0
       map[:status][:map_polygons_session] = 0
@@ -321,6 +360,7 @@ class FixerController < ApplicationController
       return map
     end
 
+    map[:tileset] = map[:map].layer
 		map[:poly] = map[:map].polygons_for_task(session, type)
 		map[:status][:map_polygons] = map[:map].polygons.count
 		map[:status][:map_polygons_session] = map[:poly].count
@@ -346,9 +386,10 @@ class FixerController < ApplicationController
     # id: poly_id
     # flags: "value=lat=lng|value=lat=lng|value=lat=lng|..."
     flags = params[:f].split("|")
-    poly_id = params[:i]
+    flaggable_id = params[:i]
+    flaggable_type = params[:ft]
     type = params[:t]
-    if poly_id == nil || flags == nil
+    if flaggable_id == nil || flags == nil
         render :text => "empty_poly"
         return
     end
@@ -362,7 +403,8 @@ class FixerController < ApplicationController
         end
         flag = Flag.new
         flag[:is_primary] = true
-        flag[:polygon_id] = poly_id
+        flag[:flaggable_id] = flaggable_id
+        flag[:flaggable_type] = flaggable_type
         flag[:flag_value] = contents[0]
         if contents[1] != ""
         	flag[:latitude] = contents[1]
