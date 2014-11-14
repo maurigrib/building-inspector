@@ -1,4 +1,4 @@
-<% content_for :page_title do %>Royal Inspector by GeoHistoricalData and NYPL Labs<% end %>
+<% content_for :page_title do %>L'ARPENTEUR TOPOGRAPHE by GeoHistoricalData and NYPL Labs<% end %>
 <% content_for :dynamic_js do %>
   <%= stylesheet_link_tag "home", :media => "all" %>
   <%= javascript_include_tag "home" %>
@@ -10,7 +10,7 @@
   <div id="welcome">
     <div class="wrapper">
       <h5>GeoHistoricalData and the New York Public Library presents</h5>
-      <h3>INSPECTEUR DU TERRITOIRE</h3>
+      <h3>L'ARPENTEUR TOPOGRAPHE</h3>
       <h4>Tuez le temps. Faites de l’histoire.</h4>
       <hr />
       <p>Bienvenus citoyens cartographes !<br />Aidez nous à faire revivre le passé de la France en identifiant<br />ses villes, ses rivières et de nombreux autres détails<br />sur des magnifiques cartes anciennes.</p>
@@ -19,7 +19,7 @@
   </div>
   <div id="intro">
     <h3 class="major">COMMENT VOUS POUVEZ CONTRIBUER</h3>
-    <p class="subhead">You can help check the current work and capture other valuable information.</p>
+    <p class="subhead">Vous pouvez aider en controlant le travail en cours ou en saisissant d'autres informations importantes.</p>
     <div id="home-slideshow" class="swipeshow">
       <ul class="slides">
         <li id="slide1" class="slide">
@@ -29,7 +29,7 @@
             <div id="slide1-no" class="control red">NO</div>
             <div id="slide1-fix" class="control yellow">FIX</div>
           </div>
-          <h4>CHECK<br />FOOTPRINTS</h4>
+          <h4>VÉRIFIER<br />LES EMPREINTES</h4>
           <svg version="1.1" class="intro-path" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 960 300" enable-background="new 0 0 960 300" xml:space="preserve">
             <polygon class="poly-yes" fill="none" stroke="#FF0000" stroke-width="3" stroke-miterlimit="10" points="333,188 385.4,158.5 433.3,221.2 377.3,253.6 "/>
             <polygon class="poly-no" fill="none" stroke="#FF0000" stroke-width="3" stroke-miterlimit="10" points="414.1,138.1 395,110.8 425.9,95.8 446.6,124.1 "/>
@@ -44,7 +44,7 @@
             <div id="slide3-c" class="marker"></div>
             <div id="slide3-d" class="marker"></div>
           </div>
-          <h4>FIX<br />FOOTPRINTS</h4>
+          <h4>VÉRIFIER<br />LES EMPREINTES</h4>
           <svg version="1.1" class="intro-path" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 960 300" enable-background="new 0 0 960 300" xml:space="preserve">
             <polygon class="poly-a" fill="none" stroke="#FF0000" stroke-width="3" stroke-miterlimit="10" points="562.3,163.1 483.4,73.2 565.3,51.1 648.6,135.1 "/>
             <polygon class="poly-b" fill="none" stroke="#FF0000" stroke-width="3" stroke-miterlimit="10" points="562.3,163.1 472.4,59.2 565.3,51.1 648.6,135.1 "/>
@@ -84,20 +84,20 @@
         </li>
       </ul>
       <div id="slide-buttons">
-        <%= link_to "CHECK FOOTPRINTS", geometry_path, {:id => "link-geometry", :class => "home-link"} %>
-        <%= link_to "FIX FOOTPRINTS", polygonfix_path, {:id => "link-polygonfix", :class => "home-link"} %>
-        <%= link_to "ENTER ADDRESSES", address_path, {:id => "link-address", :class => "home-link"} %>
-        <%= link_to "CLASSIFY COLORS", color_path, {:id => "link-color", :class => "home-link"} %>
+        <%= link_to "VÉRIFIER LES EMPREINTES", geometry_path, {:id => "link-geometry", :class => "home-link"} %>
+        <%= link_to "CORRIGER LES EMPREINTES", polygonfix_path, {:id => "link-polygonfix", :class => "home-link"} %>
+        <%= link_to "NOMMER LES LIEUX", address_path, {:id => "link-address", :class => "home-link"} %>
+        <%= link_to "CLASSIFIER LIEUX", color_path, {:id => "link-color", :class => "home-link"} %>
       </div>
     </div>
     <div>
-      <p class="subhead">try any task you like, see which one(s) you like best</p>
+      <p class="subhead">Essayez une tache, décidez celle(s) que vous préférez</p>
       <p class="subhead">or:</p>
-      <%= link_to "SURPRISE ME!", "#{@global_tasks.sample[:path]}", :id => "link-random-task", :class => "big-button" %>
+      <%= link_to "ETONNEZ MOI!", "#{@global_tasks.sample[:path]}", :id => "link-random-task", :class => "big-button" %>
     </div>
     <% if @has_score %>
     <div id="home-scores">
-        <h3>Your inspections so far:</h3>
+        <h3>VOS CONTRIBUTIONS À CES JOURS:</h3>
         <ul>
           <li><%= link_to(image_tag("icon-geometry.svg", :class=>"task-icon"), geometry_path, :class=>"link-task") %> <strong><%= @score_geometry %></strong> <%= "footprint".pluralize(@score_geometry) %> checked
             <br /><%= link_to("Inspect more!", geometry_path, :class=>"link-task") %></li>
@@ -113,13 +113,13 @@
 
     <div id="home-explained">
       <div class="header first">
-        <h3>WHY THIS MATTERS</h3>
+        <h3>POURQUOI C'EST IMPORTANT</h3>
         <h4>Imagine if maps had a magic switch<br />that let you explore the geography of the past.</h4>
         <h4>The Library wants to do this for New York City, turning historical atlases into time machines.</h4>
       </div>
       <p class="subhead">To do it we need to harvest all the fantastic detail from the original maps: building footprints, addresses, construction materials etc. — clues that will help unlock a million stories. With this information organized and searchable, you can ask new kinds of questions about history. Peel back the layers of the city and replay its growth. 'Check in' to vanished establishments and meet their ghostly proprietors. Or discover related historical documents (newspapers, photographs, business directories…) linked by place and time.</p>
-        <%= link_to "GET STARTED", "javascript:;", :id => "link-explained-get-started", :class => "learn-more big-button" %>
-      <p class="centered"><%= link_to "LEARN MORE", about_path %></p>
+        <%= link_to "ALLONS-Y !", "javascript:;", :id => "link-explained-get-started", :class => "learn-more big-button" %>
+      <p class="centered"><%= link_to "APPRENDRE DAVANTAGE", about_path %></p>
     </div>
 
 
